@@ -5,20 +5,22 @@
 #include "motor.h"
 #include "math.h"
 
+#include <memory>
+
 
 struct Rocket
 {
-	Rocket(Motor m) : motor(m) {}
+	Rocket(const std::shared_ptr<Motor>& m) : motor(m) {}
 
 	void simulate(FloatSeconds dt)
 	{
-		if (motor.readyToIgnite())
-			motor.ignite();
+		if (motor->readyToIgnite())
+			motor->ignite();
 
-		motor.update(dt);
+		motor->update(dt);
 
 		// Update state
-		auto thrust = motor.currentThrust();
+		auto thrust = motor->currentThrust();
 		ddz = thrust + gravityAccel;
 		z += dz * dt.count();
 		dz += dt.count() * ddz;
@@ -28,7 +30,7 @@ struct Rocket
 
 	static constexpr double gravityAccel = -9.81;
 
-	Motor motor;
+	const std::shared_ptr<Motor> motor;
 	double z = 0;
 	double dz = 0;
 	double ddz = 0;
@@ -46,7 +48,7 @@ struct EngineProbe : DataProbe
 {
 	void sample(const Rocket& model) override
 	{
-		m_thrustRecord.push_back(model.motor.currentThrust());
+		m_thrustRecord.push_back(model.motor->currentThrust());
 	}
 
 	void logRow(std::ostream& out) override
@@ -124,7 +126,8 @@ int main(int, const char**)
 {
 	const FloatSeconds burnTime(10);
 	const double motorThrust = 20;
-	Rocket model(Motor(burnTime, motorThrust));
+	//Rocket model(std::make_shared<ConstantMotor>(burnTime, motorThrust));
+	Rocket model(std::make_shared<ProfileSRB>("data/F10.json"));
 
 	Telemetry telemetry;
 

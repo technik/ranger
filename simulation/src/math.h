@@ -13,4 +13,10 @@ namespace math
 	{
 		return a < b ? b : a;
 	}
+
+	template<class T1, class T2>
+	auto lerp(T1 a, T1 b, T2 f)
+	{
+		return a * (1 - f) + b * f;
+	}
 }
